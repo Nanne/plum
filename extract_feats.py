@@ -13,6 +13,12 @@ import os
 import tensorflow as tf
 import time
 
+FLAGS = tf.app.flags.FLAGS
+tf.app.flags.DEFINE_string('img_root', '/roaming/public_datasets/MS-COCO/images/val2014/',
+                           'Location where original images are stored')
+tf.app.flags.DEFINE_string('record_path', '/data/cocotest.tfrecords',
+                           'Directory to write the converted result to')
+
 def _int64_feature(value):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 def _int64_features(value):
@@ -58,9 +64,7 @@ def crop_image(image_path, target_height=224, target_width=224):
         resized_image = resized_image[:, :, ::-1]
     return skimage.img_as_ubyte(resized_image)
 
-
-
-def write_to(writer, id, path, tensors):
+def write_to(writer, image, id, path, tensors):
     """
     Write VGG19 filter responses to tfrecords.
     """
@@ -75,15 +79,15 @@ def write_to(writer, id, path, tensors):
         'block3_conv4_size': _int64_features(list(tensors[1].shape)),
         'block4_conv4_size': _int64_features(list(tensors[2].shape)),
         'block5_conv4_size': _int64_features(list(tensors[3].shape)),
+        'image': _bytes_feature(image.tostring())}))
+        'image_size': _int64_features(list(image.shape)),
         }))
     writer.write(example.SerializeToString())
 
 
 # Path to the visual sentiment data set
 global_start = time.time()
-img_root = "/roaming/public_datasets/MS-COCO/images/val2014/"
-record_path = '/data/cocotest.tfrecords'
-img_files = os.listdir(img_root)
+img_files = os.listdir(FLAGS.img_root)
 num_imgs = len(img_files)
 # Path for the database
 
@@ -102,7 +106,7 @@ out_layers = [base_model.get_layer('block2_conv2').output,
               base_model.get_layer('block5_conv4').output]
 
 model = Model(input=base_model.input, output=out_layers)
-writer = tf.python_io.TFRecordWriter(record_path)
+writer = tf.python_io.TFRecordWriter(FLAGS.record_path)
 iters = num_imgs / batch_size
 img_batch = np.empty(b)
 paths = []
@@ -120,7 +124,7 @@ for i in range(0, num_imgs):
         for j in range(0, len(features[0])):
             tensors = [features[0][j], features[1][j],
                        features[2][j], features[3][j]]
-            write_to(writer, i, paths[j], tensors)
+            write_to(writer, img_batch[j], i, paths[j], tensors)
 
         img_batch = np.empty(b)
         c = 0
@@ -135,7 +139,7 @@ for i in range(0, num_imgs):
         paths = []
 
     print i, '\r',
-    path = img_root + img_files[i]
+    path = FLAGS.img_root + img_files[i]
     cropped = crop_image(path).astype("float32")
     standardized = preprocess_input(cropped)
     img_batch[c] = cropped
@@ -148,4 +152,4 @@ for j in range(0, len(features[0])):
     tensors = [features[0][j], features[1][j],
                features[2][j], features[3][j]]
     print paths[j]
-    write_to(writer, i, paths[j], tensors)
+    write_to(writer, img_batch[j], i, paths[j], tensors)

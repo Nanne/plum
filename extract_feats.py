@@ -6,7 +6,7 @@ import skimage
 import skimage.transform
 from skimage import io
 import pickle as pkl
-import h5py
+import h5py, json
 import pandas as pd
 from scipy.misc import imread
 import os
@@ -79,8 +79,8 @@ def write_to(writer, image, id, path, tensors):
         'block3_conv4_size': _int64_features(list(tensors[1].shape)),
         'block4_conv4_size': _int64_features(list(tensors[2].shape)),
         'block5_conv4_size': _int64_features(list(tensors[3].shape)),
-        'image': _bytes_feature(image.tostring())}))
-        'image_size': _int64_features(list(image.shape)),
+        'image': _bytes_feature(image.tostring()),
+        'image_size': _int64_features(list(image.shape))
         }))
     writer.write(example.SerializeToString())
 
@@ -108,8 +108,8 @@ out_layers = [base_model.get_layer('block2_conv2').output,
 model = Model(input=base_model.input, output=out_layers)
 writer = tf.python_io.TFRecordWriter(FLAGS.record_path)
 
-with open(FLAGS.record_path + ".json") as f:
-    json.dump({"count": num_imgs)
+with open(FLAGS.record_path + ".json", 'w') as f:
+    json.dump({"count": num_imgs}, f)
 
 iters = num_imgs / batch_size
 img_batch = np.empty(b)
@@ -121,7 +121,7 @@ for i in range(0, num_imgs):
     # Store batch of activations, reset empty batch
     c += 1
     if i % batch_size == 0 and i != 0 and i != iters*batch_size:
-        print "resetting", i, (i-batch_size), c
+        print "Writing batch", i
         features = model.predict(img_batch)
         #write_to(writer, i, )
         # feature_set[(i-batch_size):i] = features
@@ -143,7 +143,7 @@ for i in range(0, num_imgs):
         paths = []
 
     print i, '\r',
-    path = FLAGS.img_root + img_files[i]
+    path = os.path.join(FLAGS.img_root, img_files[i])
     cropped = crop_image(path).astype("float32")
     standardized = preprocess_input(cropped)
     img_batch[c] = cropped

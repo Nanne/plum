@@ -50,6 +50,9 @@ def deconv(batch_input, out_channels):
     [filter_width, filter_height, out_channels, in_channels]
     => [batch, out_height, out_width, out_channels]
     """
+    print batch_input
+    print out_channels
+
     with tf.variable_scope("deconv"):
         sizes = [int(d) for d in batch_input.get_shape()]
         batch, in_height, in_width, in_channels = sizes
@@ -74,7 +77,9 @@ def upsample(batch_input, out_channels, stride):
     with tf.variable_scope("upsample"):
         _, in_height, in_width, in_channels = batch_input.get_shape()
 
-        upsampled_input = tf.image.resize_nearest_neighbor(batch_input, [in_height*2, in_width*2]) 
+        upsampled_input = tf.image.resize_nearest_neighbor(batch_input,
+                                                          [int(in_height)*2,
+                                                           int(in_width)*2])
 
         filter = tf.get_variable("filter", [4, 4,
                                             in_channels,
@@ -166,7 +171,7 @@ def encoder(encoder_inputs, input_layer_spec, layer_specs, instancenorm=False):
     img_embed = tf.squeeze(layers[-1], [1, 2])
     return named_layers, img_embed
 
-def decoder(input_layers, layer_specs, output_layer_spec,
+def decoder(input_layers, layer_specs, output_layer_specs,
             drop_prob=0.5, instancenorm=False):
     """Create decoder network  based on some layerspec."""
 
@@ -178,10 +183,13 @@ def decoder(input_layers, layer_specs, output_layer_spec,
     for decoder_layer, (dropout, skip_layer) in enumerate(layer_specs):
         # Number of out channels is equal to the number of channels of
         # the skip connection we'll be concat with
-        next_skip = layer_spec[decoder_layer+1][1]
-        out_channels = input_layers[next_skip].get_shape()[3]
+        if decoder_layer < len(layer_specs) - 1:
+            next_skip = layer_specs[decoder_layer+1][1]
+        else:
+            next_skip = output_layer_specs[2]
+        out_channels = int(input_layers[next_skip].get_shape()[3])
 
-        scope_name = "decoder_%d" % (len(layer_spec) + 1 - decoder_layer)
+        scope_name = "decoder_%d" % (len(layer_specs) + 1 - decoder_layer)
         with tf.variable_scope(scope_name):
             if decoder_layer == 0:
                 # first decoder layer doesn't have skip connections
@@ -193,7 +201,8 @@ def decoder(input_layers, layer_specs, output_layer_spec,
             rectified = tf.nn.relu(input)
             # [batch, in_height, in_width, in_channels]
             # => [batch, in_height*2, in_width*2, out_channels]
-            output = upsample(rectified, out_channels)
+            # output = upsample(rectified, out_channels, stride=2)
+            output = deconv(rectified, out_channels)
             output = norm(output)
 
             if dropout > 0.0:
@@ -205,16 +214,18 @@ def decoder(input_layers, layer_specs, output_layer_spec,
     # decoder_1: [batch, 128, 128, ngf * 2]
     # => [batch, 256, 256, generator_outputs_channels]
     with tf.variable_scope("decoder_1"):
-        out_channels, dropout, skip_layer = output_layer_spec
+        out_channels, dropout, skip_layer = output_layer_specs
+        print output_layer_specs
 
         input = concatenate(values=[layers[-1], input_layers[skip_layer]], axis=3)
         rectified = tf.nn.relu(input)
-        output = upsample(rectified, out_channels)
+        # output = upsample(rectified, out_channels)
+        output = deconv(rectified, out_channels)
         output = tf.tanh(output)
 
         if dropout > 0.0:
             output = tf.nn.dropout(output, keep_prob=1 - dropout)
-
+        print 'YE UT HAPPENS', out_channels
         layers.append(output)
         named_layers["decoder_1"] = layers[-1]
 

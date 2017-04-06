@@ -18,18 +18,20 @@ def create_model(inputs, targets, aux_targets=None):
         if FLAGS.decoder:
             with tf.name_scope("decoder"):
                 out_channels = int(targets.get_shape()[-1])
+                print 'OUT CHANNELS', out_channels
                 if FLAGS.mode == "test":
-                    outputs = decoder(encoder_activations, out_channels,
-                                      FLAGS.ndf, drop_prob=0.0)
+                    outputs = decoder(encoder_activations, FLAGS.ngf,
+                                      out_channels, drop_prob=0.0)
                 else:
-                    outputs = decoder(encoder_activations, out_channels,
-                                      FLAGS.ndf, drop_prob=0.5)
+                    outputs = decoder(encoder_activations, FLAGS.ngf,
+                                      out_channels, drop_prob=0.5)
                 m['outputs'] = outputs
         # Classifier on top of the encoder
         if FLAGS.aux:
             with tf.name_scope("classifier"):
                 logits = ops.dense(image_embedding, FLAGS.num_classes)
-
+    print 'INS', inputs
+    print 'OUTS', outputs
     # Add discriminator and GAN loss
     if FLAGS.discriminator:
         # create two copies of discriminator,

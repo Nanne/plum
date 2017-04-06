@@ -52,7 +52,7 @@ def decoder(encoder_activations, ngf, generator_output_channels,
     print 'OUTSPECS MAAAN', output_layer_specs
 
     return ops.decoder(encoder_activations, layer_specs, output_layer_specs,
-            drop_prob=0.5, instancenorm=False)
+            drop_prob=0.5, instancenorm=False, upsample=False)
 
 def discriminator(discrim_inputs, discrim_targets, ndf, instancenorm=False):
     return ops.discriminator(discrim_inputs, discrim_targets, ndf, instancenorm=False)

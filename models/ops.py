@@ -75,7 +75,8 @@ def upsample(batch_input, out_channels, stride):
     => [batch, out_height, out_width, out_channels]
     """
     with tf.variable_scope("upsample"):
-        _, in_height, in_width, in_channels = batch_input.get_shape()
+        sizes = [int(d) for d in batch_input.get_shape()]
+        _, in_height, in_width, in_channels = sizes
 
         upsampled_input = tf.image.resize_nearest_neighbor(batch_input,
                                                           [int(in_height)*2,
@@ -172,7 +173,7 @@ def encoder(encoder_inputs, input_layer_spec, layer_specs, instancenorm=False):
     return named_layers, img_embed
 
 def decoder(input_layers, layer_specs, output_layer_specs,
-            drop_prob=0.5, instancenorm=False):
+            drop_prob=0.5, instancenorm=False, upsample=False):
     """Create decoder network  based on some layerspec."""
 
     layers = []
@@ -201,8 +202,10 @@ def decoder(input_layers, layer_specs, output_layer_specs,
             rectified = tf.nn.relu(input)
             # [batch, in_height, in_width, in_channels]
             # => [batch, in_height*2, in_width*2, out_channels]
-            # output = upsample(rectified, out_channels, stride=2)
-            output = deconv(rectified, out_channels)
+            if upsample:
+                output = upsample(rectified, out_channels, stride=2)
+            else:
+                output = deconv(rectified, out_channels)
             output = norm(output)
 
             if dropout > 0.0:
@@ -215,17 +218,17 @@ def decoder(input_layers, layer_specs, output_layer_specs,
     # => [batch, 256, 256, generator_outputs_channels]
     with tf.variable_scope("decoder_1"):
         out_channels, dropout, skip_layer = output_layer_specs
-        print output_layer_specs
 
         input = concatenate(values=[layers[-1], input_layers[skip_layer]], axis=3)
         rectified = tf.nn.relu(input)
-        # output = upsample(rectified, out_channels)
-        output = deconv(rectified, out_channels)
+        if upsample:
+            output = upsample(rectified, out_channels, stride=2)
+        else:
+            output = deconv(rectified, out_channels)
         output = tf.tanh(output)
 
         if dropout > 0.0:
             output = tf.nn.dropout(output, keep_prob=1 - dropout)
-        print 'YE UT HAPPENS', out_channels
         layers.append(output)
         named_layers["decoder_1"] = layers[-1]
 

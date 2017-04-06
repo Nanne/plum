@@ -7,7 +7,13 @@ from util import to_namedtuple
 
 FLAGS = tf.app.flags.FLAGS  # parse config
 
-from datasets.SALICON import read_record
+
+if FLAGS.dataset == "SALICON":
+    from datasets.SALICON import read_record
+elif FLAGS.dataset == "mscoco_objects":
+    from datasets.mscoco_objects import read_record
+else:
+    raise ValueError('Unknown dataset option')
 
 def getsize(filename):
     jsfile = filename + ".json"

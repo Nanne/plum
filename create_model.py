@@ -5,20 +5,24 @@ import tensorflow as tf
 EPS = 1e-12
 FLAGS = tf.app.flags.FLAGS  # parse config
 
-from models.unet import encoder, decoder, discriminator
+if FLAGS.architecture == "unet":
+    from models.unet import encoder, decoder, discriminator
+elif FLAGS.architecture == "vgg19":
+    from models.vgg19 import encoder, decoder, discriminator
+else:
+    raise ValueError('Unknown architecture option')
 
 def create_model(inputs, targets, aux_targets=None):
     """Create U-net with optional discriminator and auxiliary classifier."""
     m = {}
     with tf.variable_scope("generator") as scope:
-        # Image encoder, bottom half of U-net
+        # Image encoder
         with tf.name_scope("encoder"):
             encoder_activations, image_embedding = encoder(inputs, FLAGS.ngf)
-        # Image decoder, optional top have of U-net
+        # Image decoder
         if FLAGS.decoder:
             with tf.name_scope("decoder"):
                 out_channels = int(targets.get_shape()[-1])
-                print 'OUT CHANNELS', out_channels
                 if FLAGS.mode == "test":
                     outputs = decoder(encoder_activations, FLAGS.ngf,
                                       out_channels, drop_prob=0.0)
@@ -30,8 +34,6 @@ def create_model(inputs, targets, aux_targets=None):
         if FLAGS.aux:
             with tf.name_scope("classifier"):
                 logits = ops.dense(image_embedding, FLAGS.num_classes)
-    print 'INS', inputs
-    print 'OUTS', outputs
     # Add discriminator and GAN loss
     if FLAGS.discriminator:
         # create two copies of discriminator,

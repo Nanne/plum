@@ -11,7 +11,7 @@ tf.app.flags.DEFINE_integer("num_samples", None,
                             "When using TFrecords the number of samples have to \
                              be calculated at runtime. Providing a value for \
                              --num_samples bypasses this computation.")
-tf.app.flags.DEFINE_string("mode", None, "Choose 'train' 'test' 'export'")
+tf.app.flags.DEFINE_string("mode", 'train', "Choose 'train' 'test' 'export'")
 tf.app.flags.DEFINE_string("output_dir", None, "where to put output files")
 tf.app.flags.DEFINE_string("checkpoint", None,
                            "directory with checkpoint to resume training \
@@ -27,6 +27,9 @@ tf.app.flags.DEFINE_boolean("discriminator", True,
                             "Add or remove discriminator on U-net. \
                              If True train with GAN loss on top \
                              of content loss.")
+
+tf.app.flags.DEFINE_string("architecture", 'unet', "Choose 'unet' 'vgg19'")
+tf.app.flags.DEFINE_string("dataset", 'SALICON', "Choose 'SALICON' 'mscoco_objects'")
 
 tf.app.flags.DEFINE_integer("ngf", 64,
                             "number of generator filters in first conv layer \

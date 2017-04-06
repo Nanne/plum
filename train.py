@@ -23,10 +23,15 @@ def main(_):
     tf.set_random_seed(FLAGS.seed)
     np.random.seed(FLAGS.seed)
     random.seed(FLAGS.seed)
+
     if FLAGS.salicon:
         util.set_salicon()
-    if not os.path.exists(FLAGS.output_dir):
-        os.makedirs(FLAGS.output_dir)
+    
+    if FLAGS.output_dir != None:
+        if not os.path.exists(FLAGS.output_dir):
+            os.makedirs(FLAGS.output_dir)
+    else:
+        raise Exception("output_dir required for test mode")
 
     if FLAGS.mode == "export":
         if FLAGS.checkpoint is None:
@@ -37,13 +42,13 @@ def main(_):
         # disable these features in test mode
         FLAGS.scale_size = CROP_SIZE
         FLAGS.flip = False
+    else:
+        for k, v in FLAGS.__dict__['__flags'].items():
+            print(k, "=", v)
 
-    for k, v in FLAGS.__dict__['__flags'].items():
-        print(k, "=", v)
-
-    with open(os.path.join(FLAGS.output_dir, "options.json"), "w") as f:
-        f.write(json.dumps(FLAGS.__dict__['__flags'],
-                           sort_keys=True, indent=4))
+        with open(os.path.join(FLAGS.output_dir, "options.json"), "w") as f:
+            f.write(json.dumps(FLAGS.__dict__['__flags'],
+                               sort_keys=True, indent=4))
 
     examples = dataprovider.load_records()
 
@@ -149,8 +154,6 @@ def main(_):
         max_steps = 2**32
         if FLAGS.max_epochs > 0:
             max_steps = examples.steps_per_epoch * FLAGS.max_epochs
-        if FLAGS.max_steps > 0:
-            max_steps = FLAGS.max_steps
         if FLAGS.mode == "train":
             # training
             start_time = time.time()

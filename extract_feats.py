@@ -107,6 +107,10 @@ out_layers = [base_model.get_layer('block2_conv2').output,
 
 model = Model(input=base_model.input, output=out_layers)
 writer = tf.python_io.TFRecordWriter(FLAGS.record_path)
+
+with open(FLAGS.record_path + ".json") as f:
+    json.dump({"count": num_imgs)
+
 iters = num_imgs / batch_size
 img_batch = np.empty(b)
 paths = []

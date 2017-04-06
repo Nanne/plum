@@ -18,6 +18,7 @@ from create_model import create_model
 from dataprovider import load_records
 from img_ops import deprocess, convert
 import cfg, util, dataprovider
+import sys
 
 CROP_SIZE = 256
 

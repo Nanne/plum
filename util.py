@@ -8,12 +8,12 @@ import cfg
 FLAGS = tf.app.flags.FLAGS
 
 def restore_flags():
-    if tf.gfile.Exists(os.path.join(tf.app.flags.FLAGS.checkpoint_dir, 'flags.json')):
-        with open(os.path.join(tf.app.flags.FLAGS.checkpoint_dir, 'flags.json'), 'r') as f:
+    if tf.gfile.Exists(os.path.join(tf.app.flags.FLAGS.checkpoint, 'options.json')):
+        with open(os.path.join(tf.app.flags.FLAGS.checkpoint, 'options.json'), 'r') as f:
             print('Restoring training flags')
             train_flags = json.load(f)
 
-            for key in config.restore_flags:
+            for key in cfg.restore_flags:
                 if key in train_flags:
                     tf.app.flags.FLAGS.__dict__['__flags'][key] = train_flags[key]
                 print(key, tf.app.flags.FLAGS.__dict__['__flags'][key])

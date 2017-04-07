@@ -12,7 +12,9 @@ FLAGS = tf.app.flags.FLAGS  # parse config
 if FLAGS.dataset == "SALICON":
     from datasets.SALICON import read_record, preprocess, deprocess, convert
 elif FLAGS.dataset == "mscoco_objects":
-    from datasets.mscoco_objects import read_record, proprocess, deprocess, convert
+    from datasets.mscoco_objects import read_record, preprocess, deprocess, convert
+elif FLAGS.dataset == "vggfeatures":
+    from datasets.vggfeatures import read_record, preprocess, deprocess, convert
 else:
     raise ValueError('Unknown dataset option')
 
@@ -64,10 +66,19 @@ def load_records():
 
     batch = list(batch)
     steps_per_epoch = int(math.ceil(num_samples / FLAGS.batch_size))
-    paths_batch = batch.pop(0)
-    inputs_batch = batch.pop(0)
-    e["paths"], e["inputs"] = paths_batch, inputs_batch
     e["steps_per_epoch"], e["count"]  = steps_per_epoch, num_samples
+
+    paths_batch = batch.pop(0)
+    e["paths"] = paths_batch
+
+    if FLAGS.pretrained:
+        e["inputs"] = []
+        for _ in range(4):
+            e["inputs"].append(batch.pop(0))
+    else:
+        inputs_batch = batch.pop(0)
+        e["inputs"] = inputs_batch
+
     if FLAGS.decoder:
         targets_batch = batch.pop(0)
         e["targets"] = targets_batch
@@ -82,6 +93,10 @@ def load_records():
     else:
         # otherwise we visualise the inputs
         e["image"] = e["inputs"]
+
+    e["preprocess"] = preprocess
+    e["deprocess"] = deprocess
+    e["convert"] = convert
 
     examples = to_namedtuple(e, "Examples")
     return examples

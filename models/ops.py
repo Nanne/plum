@@ -50,9 +50,6 @@ def deconv(batch_input, out_channels):
     [filter_width, filter_height, out_channels, in_channels]
     => [batch, out_height, out_width, out_channels]
     """
-    print batch_input
-    print out_channels
-
     with tf.variable_scope("deconv"):
         sizes = [int(d) for d in batch_input.get_shape()]
         batch, in_height, in_width, in_channels = sizes
@@ -115,7 +112,7 @@ def batchnorm(input):
         channels = input.get_shape()[3]
         offset = tf.get_variable("offset", [channels],
                                  dtype=tf.float32,
-                                 initializer=tf.zeros_initializer)
+                                 initializer=tf.zeros_initializer())
         scale = tf.get_variable("scale", [channels],
                                 dtype=tf.float32,
                                 initializer=tf.random_normal_initializer(1.0, 0.02))

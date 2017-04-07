@@ -73,10 +73,7 @@ def write_to(writer, image, id, path, tensors):
         'block2_conv2': _bytes_feature(tensors[0].tostring()),
         'block3_conv4': _bytes_feature(tensors[1].tostring()),
         'block4_conv4': _bytes_feature(tensors[2].tostring()),
-        'block5_conv4': _bytes_feature(tensors[3].tostring()),
-        'block2_conv2_size': _int64_features(list(tensors[0].shape)),
-        'block3_conv4_size': _int64_features(list(tensors[1].shape)),
-        'block4_conv4_size': _int64_features(list(tensors[2].shape)),
+        'block5_conv4': _bytes_4_features(list(tensors[2].shape)),
         'block5_conv4_size': _int64_features(list(tensors[3].shape)),
         'image': _bytes_feature(image.tostring()),
         'image_size': _int64_features(list(image.shape))

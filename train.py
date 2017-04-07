@@ -11,7 +11,6 @@ import math
 import time
 from create_model import create_model
 import cfg, util, dataprovider
-from dataprovider import preprocess, deprocess, convert
 
 FLAGS = tf.app.flags.FLAGS  # parse config
 CROP_SIZE = 256
@@ -31,11 +30,11 @@ def main(_):
         if not os.path.exists(FLAGS.output_dir):
             os.makedirs(FLAGS.output_dir)
     else:
-        raise Exception("output_dir required for test mode")
+        raise Exception("output_dir required")
 
     if FLAGS.mode == "export":
         if FLAGS.checkpoint is None:
-            raise Exception("checkpoint required for test mode")
+            raise Exception("checkpoint required for export mode")
 
         # load some options from the checkpoint
         util.restore_flags()
@@ -51,6 +50,11 @@ def main(_):
                                sort_keys=True, indent=4))
 
     examples = dataprovider.load_records()
+
+    # Retrieve data specific functions
+    deprocess = examples.deprocess
+    preprocess = examples.preprocess
+    convert = examples.convert
 
     print("examples count = %d" % examples.count)
     if FLAGS.decoder and FLAGS.aux:
@@ -77,7 +81,7 @@ def main(_):
     # reverse any processing on images so they can
     # be written to disk or displayed to user
     with tf.name_scope("convert_images"):
-        images = deprocess(examples.images)
+        images = deprocess(examples.image)
         converted_images = convert(images, up_size)
 
     if FLAGS.decoder:

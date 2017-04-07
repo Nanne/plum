@@ -32,7 +32,8 @@ tf.app.flags.DEFINE_boolean("discriminator", True,
                              of content loss.")
 
 tf.app.flags.DEFINE_string("architecture", 'unet', "Choose 'unet' 'vgg19'")
-tf.app.flags.DEFINE_string("dataset", 'SALICON', "Choose 'SALICON' 'mscoco_objects'")
+tf.app.flags.DEFINE_string("dataset", 'SALICON', "Choose 'SALICON' 'mscoco_objects' \
+                            'vgg_features'")
 
 tf.app.flags.DEFINE_integer("ngf", 64,
                             "number of generator filters in first conv layer \

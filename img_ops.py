@@ -10,7 +10,7 @@ def img_to_float(image):
                                 message="image does not have 3 channels")
     with tf.control_dependencies([assertion]):
         raw_input = tf.identity(raw_input)
-    raw_input.set_shape([None, None, 3])
+
     return raw_input
 
 def transform(image, flip, seed, scale_size, crop_size):

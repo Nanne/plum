@@ -4,6 +4,7 @@ import os
 import math
 import random
 from util import to_namedtuple
+import json
 
 FLAGS = tf.app.flags.FLAGS  # parse config
 

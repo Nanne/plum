@@ -23,6 +23,9 @@ tf.app.flags.DEFINE_boolean("decoder", True,
 tf.app.flags.DEFINE_boolean("aux", False,
                             "Do auxiliary classification with encoder \
                              If True trains with binary cross-entropy.")
+tf.app.flags.DEFINE_boolean("pretrained", False,
+                            "Input to the encoder are features from a pretrained \
+                            model. Set this to true to visualise image")
 tf.app.flags.DEFINE_boolean("discriminator", True,
                             "Add or remove discriminator on U-net. \
                              If True train with GAN loss on top \

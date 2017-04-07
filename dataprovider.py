@@ -10,9 +10,9 @@ FLAGS = tf.app.flags.FLAGS  # parse config
 
 
 if FLAGS.dataset == "SALICON":
-    from datasets.SALICON import read_record
+    from datasets.SALICON import read_record, preprocess, deprocess, convert
 elif FLAGS.dataset == "mscoco_objects":
-    from datasets.mscoco_objects import read_record
+    from datasets.mscoco_objects import read_record, proprocess, deprocess, convert
 else:
     raise ValueError('Unknown dataset option')
 
@@ -74,5 +74,14 @@ def load_records():
     if FLAGS.aux:
         aux_targets_batch = batch.pop(0)
         e["aux"] = aux_targets_batch
+    if FLAGS.pretrained:
+        # Is the input comes from a pretrained model, then visualise
+        # the next tensor
+        image_batch = batch.pop(0)
+        e["image"] = image_batch
+    else:
+        # otherwise we visualise the inputs
+        e["image"] = e["inputs"]
+
     examples = to_namedtuple(e, "Examples")
     return examples

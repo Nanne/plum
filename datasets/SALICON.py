@@ -2,7 +2,7 @@ import tensorflow as tf
 import glob
 import os
 import math
-from img_ops import preprocess, transform, img_to_float
+from img_ops import transform, img_to_float
 import random
 
 FLAGS = tf.app.flags.FLAGS  # parse config
@@ -63,3 +63,20 @@ def read_record(filename_queue, aux=False):
         # objs = tf.reshape(objs, (tf.cast(90, tf.int32), ))
         tensors.append(objs)
     return tensors
+
+def convert(image, size):
+    """Resize image to size if given and convert to unit8."""
+    if size:
+        image = tf.image.resize_images(image, size=size,
+                                       method=tf.image.ResizeMethod.BICUBIC)
+    return tf.image.convert_image_dtype(image, dtype=tf.uint8, saturate=True)
+
+def preprocess(image):
+    """[0, 1] => [-1, 1]."""
+    with tf.name_scope("preprocess"):
+        return image * 2 - 1
+
+def deprocess(image):
+    """[-1, 1] => [0, 1]."""
+    with tf.name_scope("deprocess"):
+        return (image + 1) / 2

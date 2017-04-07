@@ -9,9 +9,9 @@ import json
 import random
 import math
 import time
-from img_ops import preprocess, deprocess, convert
 from create_model import create_model
 import cfg, util, dataprovider
+from dataprovider import preprocess, deprocess, convert
 
 FLAGS = tf.app.flags.FLAGS  # parse config
 CROP_SIZE = 256
@@ -53,7 +53,6 @@ def main(_):
     examples = dataprovider.load_records()
 
     print("examples count = %d" % examples.count)
-    inputs = deprocess(examples.inputs)
     if FLAGS.decoder and FLAGS.aux:
         model = create_model(examples.inputs, examples.targets, examples.aux)
     elif FLAGS.aux:
@@ -77,8 +76,9 @@ def main(_):
 
     # reverse any processing on images so they can
     # be written to disk or displayed to user
-    with tf.name_scope("convert_inputs"):
-        converted_inputs = convert(inputs, up_size)
+    with tf.name_scope("convert_images"):
+        images = deprocess(examples.images)
+        converted_images = convert(images, up_size)
 
     if FLAGS.decoder:
         with tf.name_scope("convert_targets"):
@@ -90,7 +90,7 @@ def main(_):
         with tf.name_scope("encode_images"):
             display_fetches = {
                 "paths": examples.paths,
-                "inputs": tf.map_fn(tf.image.encode_png, converted_inputs,
+                "images": tf.map_fn(tf.image.encode_png, converted_images,
                                     dtype=tf.string, name="input_pngs"),
                 "targets": tf.map_fn(tf.image.encode_png, converted_targets,
                                      dtype=tf.string, name="target_pngs"),
@@ -99,8 +99,8 @@ def main(_):
             }
 
     # summaries
-    with tf.name_scope("inputs_summary"):
-        tf.summary.image("inputs", converted_inputs)
+    with tf.name_scope("images_summary"):
+        tf.summary.image("images", converted_images)
 
     if FLAGS.decoder:
         with tf.name_scope("targets_summary"):

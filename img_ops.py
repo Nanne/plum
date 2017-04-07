@@ -3,19 +3,6 @@ from __future__ import division
 import tensorflow as tf
 FLAGS = tf.app.flags.FLAGS  # parse config
 
-
-def preprocess(image):
-    """[0, 1] => [-1, 1]."""
-    with tf.name_scope("preprocess"):
-        return image * 2 - 1
-
-
-def deprocess(image):
-    """[-1, 1] => [0, 1]."""
-    with tf.name_scope("deprocess"):
-        return (image + 1) / 2
-
-
 def img_to_float(image):
     """Convert image to float."""
     raw_input = tf.image.convert_image_dtype(image, dtype=tf.float32)
@@ -48,11 +35,3 @@ def transform(image, flip, seed, scale_size, crop_size):
     elif scale_size < crop_size:
         raise Exception("scale size cannot be less than crop size")
     return r
-
-
-def convert(image, size):
-    """Resize image to size if given and convert to unit8."""
-    if size:
-        image = tf.image.resize_images(image, size=size,
-                                       method=tf.image.ResizeMethod.BICUBIC)
-    return tf.image.convert_image_dtype(image, dtype=tf.uint8, saturate=True)

@@ -60,8 +60,7 @@ def crop_image(image_path, target_height=224, target_width=224):
         crop_length = int((h - target_height) / 2)
         resized_image = resized_image[crop_length:crop_length+target_height, :]
     # 'RGB'->'BGR'
-    if bgr:
-        resized_image = resized_image[:, :, ::-1]
+    resized_image = resized_image[:, :, ::-1]
     return skimage.img_as_ubyte(resized_image)
 
 def write_to(writer, image, id, path, tensors):
@@ -93,7 +92,6 @@ num_imgs = len(img_files)
 
 
 batch_size = 1000
-bgr = True
 # tensorflow (tf): b x h x w x c
 b = (batch_size, 224, 224, 3)
 
@@ -155,5 +153,4 @@ features = model.predict(img_batch)
 for j in range(0, len(features[0])):
     tensors = [features[0][j], features[1][j],
                features[2][j], features[3][j]]
-    print paths[j]
     write_to(writer, img_batch[j], i, paths[j], tensors)

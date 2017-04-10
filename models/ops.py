@@ -7,6 +7,11 @@ if tf.__version__ == "0.12.1":
 else:
     concatenate = tf.concat
 
+if tf.__version__ == "0.12.1":
+    init_zeros = tf.zeros_initializer
+else:
+    init_zeros = tf.zeros_initializer()
+
 def dense(batch_input, out_dim):
     """Add dense layer to the graph."""
     with tf.name_scope('dense'):
@@ -112,7 +117,7 @@ def batchnorm(input):
         channels = input.get_shape()[3]
         offset = tf.get_variable("offset", [channels],
                                  dtype=tf.float32,
-                                 initializer=tf.zeros_initializer())
+                                 initializer=init_zeros)
         scale = tf.get_variable("scale", [channels],
                                 dtype=tf.float32,
                                 initializer=tf.random_normal_initializer(1.0, 0.02))

@@ -29,12 +29,10 @@ def _bytes_feature(value):
 
 def preprocess_input(x):
     """Zero-center by mean pixel from ImageNet."""
-    r, g, b = np.mean(x, axis=(0,1))
-    x[:, :, 0] -= r
-    x[:, :, 1] -= g
-    x[:, :, 2] -= b
+    x[:, :, 0] -= 103.939
+    x[:, :, 1] -= 116.779
+    x[:, :, 2] -= 123.68
     return x
-
 
 def crop_image(image_path, target_height=224, target_width=224):
     """Reshape image shorter and crop, keep aspect ratio."""
@@ -61,7 +59,7 @@ def crop_image(image_path, target_height=224, target_width=224):
         resized_image = resized_image[crop_length:crop_length+target_height, :]
     # 'RGB'->'BGR'
     resized_image = resized_image[:, :, ::-1]
-    return skimage.img_as_ubyte(resized_image)
+    return resized_image
 
 def write_to(writer, image, id, path, tensors):
     """
@@ -73,7 +71,10 @@ def write_to(writer, image, id, path, tensors):
         'block2_conv2': _bytes_feature(tensors[0].tostring()),
         'block3_conv4': _bytes_feature(tensors[1].tostring()),
         'block4_conv4': _bytes_feature(tensors[2].tostring()),
-        'block5_conv4': _bytes_4_features(list(tensors[2].shape)),
+        'block5_conv4': _bytes_feature(tensors[3].tostring()),
+        'block2_conv2_size': _int64_features(list(tensors[0].shape)),
+        'block3_conv4_size': _int64_features(list(tensors[1].shape)),
+        'block4_conv4_size': _int64_features(list(tensors[2].shape)),
         'block5_conv4_size': _int64_features(list(tensors[3].shape)),
         'image': _bytes_feature(image.tostring()),
         'image_size': _int64_features(list(image.shape))
@@ -139,7 +140,7 @@ for i in range(0, num_imgs):
 
     print i, '\r',
     path = os.path.join(FLAGS.img_root, img_files[i])
-    cropped = crop_image(path).astype("float32")
+    cropped = crop_image(path)
     standardized = preprocess_input(cropped)
     img_batch[c] = cropped
     paths.append(path)

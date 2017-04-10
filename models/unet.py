@@ -49,7 +49,6 @@ def decoder(encoder_activations, ngf, generator_output_channels,
     ]
 
     output_layer_specs = (generator_output_channels, 0.0, 'encoder_1')
-    print 'OUTSPECS MAAAN', output_layer_specs
 
     return ops.decoder(encoder_activations, layer_specs, output_layer_specs,
             drop_prob=0.5, instancenorm=False, upsample=False)

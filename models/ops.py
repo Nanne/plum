@@ -226,6 +226,7 @@ def decoder(input_layers, layer_specs, output_layer_specs,
 
         if dropout > 0.0:
             output = tf.nn.dropout(output, keep_prob=1 - dropout)
+
         layers.append(output)
         named_layers["decoder_1"] = layers[-1]
 

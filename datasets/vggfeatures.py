@@ -78,6 +78,10 @@ def preprocess(image):
         return tf.identity(image)
 
 def deprocess(image):
-    """BGR -> RGB"""
+    """BGR -> RGB, add means"""
     with tf.name_scope("deprocess"):
-        return image[:,:,::-1]
+        means = tf.reshape([103.939, 116.779, 123.68], (1,1,1,3))
+        image = tf.add(image, means)
+        image = image[:,:,:,::-1]
+        return image
+

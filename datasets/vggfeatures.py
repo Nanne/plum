@@ -59,29 +59,30 @@ def read_record(filename_queue, aux=False):
         image = feature_to_shaped(features['image'], features['image_size'], dtype=tf.float64)
         image.set_shape((224,224,3))
         image = tf.cast(image, tf.float32)
-        tensors.append(image)
+
+        tensors.append(preprocess_output(image))
         # Append image again for in summary
         tensors.append(image)
 
     return tensors
 
-def convert(image, size):
-    """Resize image to size if given and convert to unit8."""
-    if size:
-        image = tf.image.resize_images(image, size=size,
-                                       method=tf.image.ResizeMethod.BICUBIC)
-    return tf.image.convert_image_dtype(image, dtype=tf.uint8, saturate=True)
-
-def preprocess(image):
-    """No preprocessing"""
-    with tf.name_scope("preprocess"):
+def preprocess_input(image):
+    """Identity."""
+    with tf.name_scope("preprocess_input"):
         return tf.identity(image)
 
-def deprocess(image):
-    """BGR -> RGB, add means"""
-    with tf.name_scope("deprocess"):
-        means = tf.reshape([103.939, 116.779, 123.68], (1,1,1,3))
-        image = tf.add(image, means)
-        image = image[:,:,:,::-1]
-        return image
+def deprocess_input(image):
+    """Identity."""
+    with tf.name_scope("deprocess_input"):
+        return tf.identity(image)
 
+def preprocess_output(image):
+    """ [0,255] -> [-1, 1] """
+    with tf.name_scope("preprocess_output"):
+        return (image/255) * 2 - 1
+
+def deprocess_output(image):
+    """[-1, 1] => [0, 255]."""
+    with tf.name_scope("deprocess_output"):
+        image = ((image + 1) / 2) * 255
+        return tf.cast(image, tf.uint8)

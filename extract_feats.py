@@ -1,23 +1,12 @@
 from keras.applications import VGG19
 from keras.applications.imagenet_utils import preprocess_input
 from keras.models import Model
+from keras.preprocessing import image as keras_image
 import numpy as np
-import skimage
 import skimage.transform
-from skimage import io
-import pickle as pkl
 import h5py, json
-import pandas as pd
-from scipy.misc import imread
-import os
 import tensorflow as tf
-import time
-
-FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_string('img_root', '/roaming/public_datasets/MS-COCO/images/val2014/',
-                           'Location where original images are stored')
-tf.app.flags.DEFINE_string('record_path', '/data/cocotest.tfrecords',
-                           'Directory to write the converted result to')
+import time, os
 
 def _int64_feature(value):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
@@ -26,42 +15,35 @@ def _int64_features(value):
 def _bytes_feature(value):
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
-
-def preprocess_input(x):
-    """Zero-center by mean pixel from ImageNet."""
-    x[:, :, 0] -= 103.939
-    x[:, :, 1] -= 116.779
-    x[:, :, 2] -= 123.68
-    return x
-
-def crop_image(image_path, target_height=224, target_width=224):
+def crop_image(image, target_height=224, target_width=224):
     """Reshape image shorter and crop, keep aspect ratio."""
-    image = skimage.img_as_float(io.imread(image_path)).astype("float32")
-    # print image
-    if len(image.shape) == 2:
-        image = np.tile(image[:, :, np.newaxis], (1, 1, 3))
-    height, width, rgb = image.shape
+    width, height = image.size
 
     if width == height:
-        resized_image = skimage.transform.resize(image,
-                                                 (target_height,
-                                                  target_width))
+        resized_image = image.resize((target_width,
+                                      target_height))
+
     elif height < width:
         w = int(width * float(target_height)/height)
-        resized_image = skimage.transform.resize(image, (target_height, w))
-        crop_length = int((w - target_width) / 2)
-        resized_image = resized_image[:, crop_length:crop_length+target_width]
+        resized_image = image.resize((w, target_height))
 
+        crop_length = int((w - target_width) / 2)
+        resized_image = resized_image.crop((crop_length, 
+                                           0,
+                                           crop_length+target_width,
+                                           target_height))
     else:
         h = int(height * float(target_width) / width)
-        resized_image = skimage.transform.resize(image, (h, target_width))
+        resized_image = image.resize((target_width, h))
+
         crop_length = int((h - target_height) / 2)
-        resized_image = resized_image[crop_length:crop_length+target_height, :]
-    # 'RGB'->'BGR'
-    resized_image = resized_image[:, :, ::-1]
+        resized_image = resized_image.crop((0,
+                                           crop_length, 
+                                           target_width,
+                                           crop_length+target_height))
     return resized_image
 
-def write_to(writer, image, id, path, tensors):
+def write_to(writer, id, image, path, tensors):
     """
     Write VGG19 filter responses to tfrecords.
     """
@@ -76,79 +58,53 @@ def write_to(writer, image, id, path, tensors):
         'block3_conv4_size': _int64_features(list(tensors[1].shape)),
         'block4_conv4_size': _int64_features(list(tensors[2].shape)),
         'block5_conv4_size': _int64_features(list(tensors[3].shape)),
-        'image': _bytes_feature(image.tostring()),
-        'image_size': _int64_features(list(image.shape))
+        'image': _bytes_feature(image.tobytes()),
+        'image_size': _int64_features(list(image.size) + [3])
         }))
     writer.write(example.SerializeToString())
 
+if __name__ == '__main__':
+    FLAGS = tf.app.flags.FLAGS
+    tf.app.flags.DEFINE_string('img_root', '/roaming/public_datasets/MS-COCO/images/val2014/',
+                               'Location where original images are stored')
+    tf.app.flags.DEFINE_string('record_path', '/data/cocotest.tfrecords',
+                               'Directory to write the converted result to')
 
-# Path to the visual sentiment data set
-global_start = time.time()
-img_files = os.listdir(FLAGS.img_root)
-num_imgs = len(img_files)
-# Path for the database
+    # Path to the visual sentiment data set
+    img_files = os.listdir(FLAGS.img_root)
+    num_imgs = len(img_files)
 
+    print "Initializing model"
+    # VGG19 until the last fully connected layer
+    base_model = VGG19(weights='imagenet', include_top=False, pooling='avg')
+    out_layers = [base_model.get_layer('block2_conv2').output,
+                  base_model.get_layer('block3_conv4').output,
+                  base_model.get_layer('block4_conv4').output,
+                  base_model.get_layer('block5_conv4').output]
 
-batch_size = 1000
-# tensorflow (tf): b x h x w x c
-b = (batch_size, 224, 224, 3)
+    model = Model(input=base_model.input, output=out_layers)
+    writer = tf.python_io.TFRecordWriter(FLAGS.record_path)
 
-print "Initializing model"
-# VGG19 until the last fully connected layer
-base_model = VGG19(weights='imagenet', include_top=False, pooling='avg')
-out_layers = [base_model.get_layer('block2_conv2').output,
-              base_model.get_layer('block3_conv4').output,
-              base_model.get_layer('block4_conv4').output,
-              base_model.get_layer('block5_conv4').output]
+    with open(FLAGS.record_path + ".json", 'w') as f:
+        json.dump({"count": num_imgs}, f)
 
-model = Model(input=base_model.input, output=out_layers)
-writer = tf.python_io.TFRecordWriter(FLAGS.record_path)
+    print "Writing", num_imgs, "images"
+    start = time.time()
+    for i in range(0, num_imgs):
+        print i, '\r',
+        path = os.path.join(FLAGS.img_root, img_files[i])
 
-with open(FLAGS.record_path + ".json", 'w') as f:
-    json.dump({"count": num_imgs}, f)
+        image = keras_image.load_img(path)
+        cropped = crop_image(image)
+        standardized = keras_image.img_to_array(cropped)
+        standardized = np.expand_dims(standardized, axis=0)
+        standardized = preprocess_input(standardized)
 
-iters = num_imgs / batch_size
-img_batch = np.empty(b)
-paths = []
-c = -1
-print "iters", iters, "batchsize", batch_size, "num_imgs", num_imgs
-start = time.time()
-for i in range(0, num_imgs):
-    # Store batch of activations, reset empty batch
-    c += 1
-    if i % batch_size == 0 and i != 0 and i != iters*batch_size:
-        print "Writing batch", i
-        features = model.predict(img_batch)
-        #write_to(writer, i, )
-        # feature_set[(i-batch_size):i] = features
-        for j in range(0, len(features[0])):
-            tensors = [features[0][j], features[1][j],
-                       features[2][j], features[3][j]]
-            write_to(writer, img_batch[j], i, paths[j], tensors)
+        features = model.predict(standardized)
 
-        img_batch = np.empty(b)
-        c = 0
-        paths = []
-        print 'Batch processed in:', time.time() - start
-        start = time.time()
-    # Last batch
-    elif i == iters * batch_size:
-        print i, num_imgs
-        img_batch = np.empty((num_imgs%batch_size, 224, 224, 3))
-        c = 0
-        paths = []
+        tensors = [features[0], features[1],
+               features[2], features[3]]
 
-    print i, '\r',
-    path = os.path.join(FLAGS.img_root, img_files[i])
-    cropped = crop_image(path)
-    standardized = preprocess_input(cropped)
-    img_batch[c] = cropped
-    paths.append(path)
+        write_to(writer, i, cropped, path, tensors)
 
-
-# Extracting from last batch
-features = model.predict(img_batch)
-for j in range(0, len(features[0])):
-    tensors = [features[0][j], features[1][j],
-               features[2][j], features[3][j]]
-    write_to(writer, img_batch[j], i, paths[j], tensors)
+    print 'Data processed in:', time.time() - start

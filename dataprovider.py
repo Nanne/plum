@@ -8,7 +8,6 @@ import json
 
 FLAGS = tf.app.flags.FLAGS  # parse config
 
-
 if FLAGS.dataset == "SALICON":
     from datasets.SALICON import read_record, convert
 if FLAGS.dataset == "SALICON_VGG":
@@ -27,12 +26,12 @@ def getsize(filename):
             N = json.load(f)['count']
     else:
         N = 0
+        print "Obtaining sample count:"
         for record in tf.python_io.tf_record_iterator(filename):
             N += 1
             print N, '\r',
         with open(jsfile, 'w') as f:
             f.write(json.dumps({'count': N}))
-    print N
     return N
 
 def load_records():
@@ -52,7 +51,6 @@ def load_records():
 
     # Need to loop through all records and count if sample count not given
     if not FLAGS.num_samples:
-        print "Obtaining sample count:"
         num_samples = getsize(records_file)
     else:
         num_samples = FLAGS.num_samples

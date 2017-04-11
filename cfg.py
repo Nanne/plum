@@ -27,7 +27,7 @@ tf.app.flags.DEFINE_boolean("pretrained", False,
                             "Input to the encoder are features from a pretrained \
                             model. Set this to true to visualise image")
 tf.app.flags.DEFINE_boolean("discriminator", True,
-                            "Add or remove discriminator on U-net. \
+                            "Add or remove discriminator. \
                              If True train with GAN loss on top \
                              of content loss.")
 
@@ -41,6 +41,8 @@ tf.app.flags.DEFINE_integer("ngf", 64,
 tf.app.flags.DEFINE_integer("--ndf", 64,
                             "number of discriminator filters \
                              in first conv layer of the discriminator")
+tf.app.flags.DEFINE_integer("num_classes", None,
+                            "Number of classes for auxiliary prediction")
 
 tf.app.flags.DEFINE_string("content_loss", "bat",
                            "Choose 'bat', 'L1' or 'both' \
@@ -49,8 +51,6 @@ tf.app.flags.DEFINE_float("content_weight", 100.0,
                           "weight on content term for generator gradient")
 tf.app.flags.DEFINE_float("aux_weight", 10.0,
                           "weight on aux term for generator gradient")
-tf.app.flags.DEFINE_integer("num_classes", None,
-                            "Number of classes for auxiliary prediction")
 tf.app.flags.DEFINE_float("gan_weight", 1.0,
                           "weight on GAN term for generator gradient")
 
@@ -70,15 +70,11 @@ tf.app.flags.DEFINE_integer("display_freq", 0,
 tf.app.flags.DEFINE_integer("save_freq", 5000,
                             "save model every save_freq steps, 0 to disable")
 
-tf.app.flags.DEFINE_float("aspect_ratio", 1.0,
-                          "aspect ratio of output images (width/height)")
-tf.app.flags.DEFINE_integer("batch_size", 1, "number of images in batch")
+
 tf.app.flags.DEFINE_string("which_direction", "AtoB", "Choose 'AtoB', 'BtoA'")
 tf.app.flags.DEFINE_integer("scale_size", 286,
                             "scale images to this size before \
                              cropping to 256x256")
-tf.app.flags.DEFINE_integer("upsample_h", None, "Upsample image to H x W")
-tf.app.flags.DEFINE_integer("upsample_w", None, "Upsample image to H x W")
 tf.app.flags.DEFINE_boolean("salicon", False,
                             "Load settings from config file \
                              salicon.cfg for convenience")
@@ -86,10 +82,11 @@ tf.app.flags.DEFINE_boolean("salicon", False,
 tf.app.flags.DEFINE_boolean("flip", True, "flip images horizontally")
 tf.app.flags.DEFINE_boolean("instancenorm", False,
                             "Do instancenorm instead of batchnorm")
-tf.app.flags.DEFINE_boolean("no_flip", False,
-                            "don't flip images horizontally")
+
+tf.app.flags.DEFINE_integer("batch_size", 1, "number of images in batch")
 tf.app.flags.DEFINE_float("lr", 0.0002, "initial learning rate for adam")
 tf.app.flags.DEFINE_float("beta1", 0.5, "momentum term of adam")
+
 tf.app.flags.DEFINE_integer("seed", 1860795210, "Random seed")
 
 """Restore options from checkpoint/options.json."""

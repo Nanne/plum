@@ -25,7 +25,7 @@ def main(_):
 
     if FLAGS.salicon:
         util.set_salicon()
-    
+
     if FLAGS.output_dir != None:
         if not os.path.exists(FLAGS.output_dir):
             os.makedirs(FLAGS.output_dir)
@@ -51,10 +51,11 @@ def main(_):
 
     examples = dataprovider.load_records()
 
-    # Retrieve data specific functions
-    deprocess = examples.deprocess
-    preprocess = examples.preprocess
-    convert = examples.convert
+    # Retrieve data specific function deprocess
+    # It deprocesss output image
+    deprocess_input = examples.deprocess_input
+    deprocess_output = examples.deprocess_output
+
 
     print("examples count = %d" % examples.count)
     if FLAGS.decoder and FLAGS.aux:
@@ -66,11 +67,6 @@ def main(_):
     else:
         raise Exception("At least on of --aux or --decoder has to be True")
 
-    # undo preprocessing on output and display images
-    if FLAGS.decoder:
-        targets = deprocess(examples.targets)
-        outputs = deprocess(model.outputs)
-
     if FLAGS.upsample_h:
         up_size = (FLAGS.upsample_h, FLAGS.upsample_w)
     elif FLAGS.aspect_ratio != 1.0:
@@ -80,45 +76,44 @@ def main(_):
 
     # reverse any processing on images so they can
     # be written to disk or displayed to user
-    with tf.name_scope("convert_images"):
-        images = deprocess(examples.image)
-        converted_images = convert(images, up_size)
+    with tf.name_scope("deprocess_images"):
+        deprocessed_images = deprocess_input(examples.images)
 
     if FLAGS.decoder:
-        with tf.name_scope("convert_targets"):
-            converted_targets = convert(targets, up_size)
+        with tf.name_scope("deprocess_targets"):
+            deprocessed_targets = deprocess_output(examples.targets)
 
-        with tf.name_scope("convert_outputs"):
-            converted_outputs = convert(outputs, up_size)
+        with tf.name_scope("deprocess_outputs"):
+            deprocessed_outputs = deprocess_output(model.outputs)
 
         with tf.name_scope("encode_images"):
             display_fetches = {
                 "paths": examples.paths,
-                "images": tf.map_fn(tf.image.encode_png, converted_images,
+                "images": tf.map_fn(tf.image.encode_png, deprocessed_images,
                                     dtype=tf.string, name="input_pngs"),
-                "targets": tf.map_fn(tf.image.encode_png, converted_targets,
+                "targets": tf.map_fn(tf.image.encode_png, deprocessed_targets,
                                      dtype=tf.string, name="target_pngs"),
-                "outputs": tf.map_fn(tf.image.encode_png, converted_outputs,
+                "outputs": tf.map_fn(tf.image.encode_png, deprocessed_outputs,
                                      dtype=tf.string, name="output_pngs"),
             }
 
     # summaries
     with tf.name_scope("images_summary"):
-        tf.summary.image("images", converted_images)
+        tf.summary.image("images", deprocessed_images)
 
     if FLAGS.decoder:
         with tf.name_scope("targets_summary"):
-            tf.summary.image("targets", converted_targets)
+            tf.summary.image("targets", deprocessed_targets)
 
         with tf.name_scope("outputs_summary"):
-            tf.summary.image("outputs", converted_outputs)
+            tf.summary.image("outputs", deprocessed_outputs)
 
         tf.summary.scalar("generator_loss_content", model.gen_loss_content)
 
     if FLAGS.discriminator:
         with tf.name_scope("predict_real_summary"):
             tf.summary.image("predict_real",
-                             tf.image.convert_image_dtype(model.predict_real,
+                             tf.image.deprocess_image_dtype(model.predict_real,
                                                           dtype=tf.uint8))
         with tf.name_scope("predict_fake_summary"):
             tf.summary.image("predict_fake",

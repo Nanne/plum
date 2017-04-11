@@ -10,11 +10,13 @@ FLAGS = tf.app.flags.FLAGS  # parse config
 
 
 if FLAGS.dataset == "SALICON":
-    from datasets.SALICON import read_record, preprocess, deprocess, convert
+    from datasets.SALICON import read_record, convert
+if FLAGS.dataset == "SALICON_VGG":
+    from datasets.salicon_vggfeatures import read_record, deprocess_input, deprocess_output
 elif FLAGS.dataset == "mscoco_objects":
-    from datasets.mscoco_objects import read_record, preprocess, deprocess, convert
+    from datasets.mscoco_objects import read_record, deprocess_input, deprocess_output
 elif FLAGS.dataset == "vggfeatures":
-    from datasets.vggfeatures import read_record, preprocess, deprocess, convert
+    from datasets.vggfeatures import read_record, deprocess_input, deprocess_output
 else:
     raise ValueError('Unknown dataset option')
 
@@ -89,14 +91,14 @@ def load_records():
         # Is the input comes from a pretrained model, then visualise
         # the next tensor
         image_batch = batch.pop(0)
-        e["image"] = image_batch
+        e["images"] = image_batch
     else:
         # otherwise we visualise the inputs
-        e["image"] = e["inputs"]
+        e["images"] = e["inputs"]
 
-    e["preprocess"] = preprocess
-    e["deprocess"] = deprocess
-    e["convert"] = convert
+    e["deprocess_input"] = deprocess_input
+    e["deprocess_output"] = deprocess_output
+
 
     examples = to_namedtuple(e, "Examples")
     return examples

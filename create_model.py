@@ -66,12 +66,15 @@ def create_model(inputs, targets, aux_targets=None):
         # Compute Bhataccarya distance
         gen_loss = 0
         if FLAGS.decoder:
+            mean = tf.reduce_mean(targets)
+            targets = tf.Print(targets, [mean], message='Target ')
             logits_pred = tf.reshape(outputs, [FLAGS.batch_size, -1])
             target_flat = tf.reshape(targets, [FLAGS.batch_size, -1])
             prob_pred = tf.nn.softmax(logits_pred)
             prob_target = tf.nn.softmax(target_flat)
             gen_loss_bat = - tf.log(tf.reduce_sum(tf.sqrt(tf.multiply(prob_pred, prob_target))))
             gen_loss_L1 = tf.reduce_mean(tf.abs(targets - outputs))
+
             if FLAGS.content_loss == 'bat':
                 gen_loss_content = gen_loss_bat
             elif FLAGS.content_loss == 'L1':

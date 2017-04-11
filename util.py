@@ -61,7 +61,7 @@ def save_images(fetches, output_dir, step=None, only_output=False):
     for i, in_path in enumerate(fetches["paths"]):
         name, _ = os.path.splitext(os.path.basename(in_path.decode("utf8")))
         fileset = {"name": name, "step": step}
-        for kind in ["inputs", "outputs", "targets"]:
+        for kind in ["images", "outputs", "targets"]:
             if only_output and kind == "outputs":
                 filename = name + ".png"
             else:
@@ -99,7 +99,7 @@ def append_index(filesets, output_dir, step=False):
             index.write("<td>%d</td>" % fileset["step"])
         index.write("<td>%s</td>" % fileset["name"])
 
-        for kind in ["inputs", "outputs", "targets"]:
+        for kind in ["images", "outputs", "targets"]:
             index.write("<td><img src='images/%s'></td>" % fileset[kind])
 
         index.write("</tr>")

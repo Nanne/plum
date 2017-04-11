@@ -16,7 +16,6 @@ from saliconeval.eval import SALICONEval
 
 from create_model import create_model
 from dataprovider import load_records
-from img_ops import deprocess, convert
 import cfg, util, dataprovider
 import sys
 
@@ -26,6 +25,7 @@ FLAGS = tf.app.flags.FLAGS  # parse config
 FLAGS.crop_size = CROP_SIZE
 FLAGS.mode = "test"
 
+'''
 config = ConfigParser.ConfigParser()
 config.readfp(open(r'salicon.cfg'))
 if FLAGS.records:
@@ -36,7 +36,7 @@ FLAGS.scale_size = config.getint("Image", "scale_size")
 FLAGS.upsample_w = config.getint("Image", "upsample_w")
 FLAGS.upsample_h = config.getint("Image", "upsample_h")
 FLAGS.which_direction = config.get("Image", "which_direction")
-
+'''
 annFile = "/roaming/public_datasets/SALICON/annotations/fixations_val2015r1.json"
 resFile = os.path.join(FLAGS.output_dir, "fullval_result.json")
 salicon = SALICON(annFile)
@@ -107,47 +107,41 @@ def main():
 
     print(FLAGS.aux)
     examples = load_records()
-    if FLAGS.aux:
-        print("AUX")
-        model = create_model(examples.inputs, examples.targets, examples.aux)
-    else:
-        model = create_model(examples.inputs, examples.targets)
+
+    deprocess_input = examples.deprocess_input
+    deprocess_output = examples.deprocess_output
+
+    print("examples count = %d" % examples.count)
+    model = create_model(examples)
 
 
-    # undo preprocessing on output and display images
-    inputs = deprocess(examples.inputs)
-    targets = deprocess(examples.targets)
-    outputs = deprocess(model.outputs)
+    # summaries
+    with tf.name_scope("images_summary"):
+        deprocessed_images = deprocess_input(examples.images)
+        tf.summary.image("images", deprocessed_images)
 
-    if FLAGS.upsample_h:
-        up_size = (FLAGS.upsample_h, FLAGS.upsample_w)
-    elif FLAGS.aspect_ratio != 1.0:
-        up_size = [CROP_SIZE, int(round(CROP_SIZE * FLAGS.aspect_ratio))]
-    else:
-        up_size = None
+    if FLAGS.decoder:
+        with tf.name_scope("targets_summary"):
+            deprocessed_targets = deprocess_output(examples.targets)
+            tf.summary.image("targets", deprocessed_targets)
+
+        with tf.name_scope("outputs_summary"):
+            deprocessed_outputs = deprocess_output(model.outputs)
+            tf.summary.image("outputs", deprocessed_outputs)
+
+        with tf.name_scope("encode_images"):
+            display_fetches = {
+                "paths": examples.paths,
+                "images": tf.map_fn(tf.image.encode_png, deprocessed_images,
+                                    dtype=tf.string, name="input_pngs"),
+                "targets": tf.map_fn(tf.image.encode_png, deprocessed_targets,
+                                     dtype=tf.string, name="target_pngs"),
+                "outputs": tf.map_fn(tf.image.encode_png, deprocessed_outputs,
+                                     dtype=tf.string, name="output_pngs"),
+            }
 
     # reverse any processing on images so they can
     # be written to disk or displayed to user
-    with tf.name_scope("convert_inputs"):
-        converted_inputs = convert(inputs, up_size)
-
-    with tf.name_scope("convert_targets"):
-        converted_targets = convert(targets, up_size)
-
-    with tf.name_scope("convert_outputs"):
-        converted_outputs = convert(outputs, up_size)
-
-    with tf.name_scope("encode_images"):
-        display_fetches = {
-            "paths": examples.paths,
-            "inputs": tf.map_fn(tf.image.encode_png, converted_inputs,
-                                dtype=tf.string, name="input_pngs"),
-            "targets": tf.map_fn(tf.image.encode_png, converted_targets,
-                                 dtype=tf.string, name="target_pngs"),
-            "outputs": tf.map_fn(tf.image.encode_png, converted_outputs,
-                                 dtype=tf.string, name="output_pngs"),
-        }
-
     saver = tf.train.Saver()
     old_checkpoint = None
     while True:

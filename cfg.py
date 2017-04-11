@@ -93,8 +93,9 @@ tf.app.flags.DEFINE_float("beta1", 0.5, "momentum term of adam")
 tf.app.flags.DEFINE_integer("seed", 1860795210, "Random seed")
 
 """Restore options from checkpoint/options.json."""
-restore_flags = {"which_direction", "ngf", "ndf",
+restore_flags = {"ngf", "ndf",
            "gan_weight", "content_weight", "lr", "beta1",
            "trace_freq", "summary_freq", "aux", "aux_weight",
            "num_classes", "discriminator", "instancenorm",
-           "content_loss", "decoder"}
+           "decoder", 'bat_loss', 'l1_loss',
+           'architecture', 'dataset', 'pretrained'}

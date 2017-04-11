@@ -81,11 +81,10 @@ def create_model(e):
             if FLAGS.l1_loss > 0:
                 gen_loss_L1 = tf.reduce_mean(tf.abs(e.targets - outputs))
                 gen_loss_content += FLAGS.l1_loss * gen_loss_L1
-            elif FLAGS.l2_loss > 0:
+            if FLAGS.l2_loss > 0:
                 gen_loss_L2 = tf.reduce_mean(tf.pow(e.targets - outputs,2))
                 gen_loss_content += FLAGS.l2_loss * gen_loss_L2
-            else:
-                raise NotImplementedError("Loss {} not implemented".format(FLAGS.content_loss))
+
             gen_loss += FLAGS.content_weight * gen_loss_content
         if e.discriminator_inputs != None:
             with tf.name_scope("generator_gan_loss"):

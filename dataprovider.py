@@ -17,6 +17,9 @@ elif FLAGS.dataset == "mscoco_objects":
 elif FLAGS.dataset == "vggfeatures":
     from datasets.vggfeatures import read_record, deprocess_input, deprocess_output
 else:
+    print FLAGS.dataset
+    print FLAGS.dataset
+
     raise ValueError('Unknown dataset option')
 
 def getsize(filename):

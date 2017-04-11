@@ -116,6 +116,7 @@ def create_model(inputs, targets, aux_targets=None):
                 m['gen_grads_and_vars'] = gen_grads_and_vars
         else:
             gen_tvars = [var for var in tf.trainable_variables() if var.name.startswith("generator")]
+            print [x.name for x  in gen_tvars]
             gen_optim = tf.train.AdamOptimizer(FLAGS.lr, FLAGS.beta1)
             gen_grads_and_vars = gen_optim.compute_gradients(gen_loss,
                                                              var_list=gen_tvars)

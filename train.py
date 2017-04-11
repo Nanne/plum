@@ -68,17 +68,17 @@ def main(_):
 
     # summaries
     with tf.name_scope("images_summary"):
-        converted_images = deprocess_input(examples.images)
-        tf.summary.image("images", converted_images)
+        deprocessed_images = deprocess_input(examples.images)
+        tf.summary.image("images", deprocessed_images)
 
     if FLAGS.decoder:
         with tf.name_scope("targets_summary"):
-            converted_targets = deprocess_output(examples.targets)
-            tf.summary.image("targets", converted_targets)
+            deprocessed_targets = deprocess_output(examples.targets)
+            tf.summary.image("targets", deprocessed_targets)
 
         with tf.name_scope("outputs_summary"):
-            converted_outputs = deprocess_output(model.outputs)
-            tf.summary.image("outputs", converted_outputs)
+            deprocessed_outputs = deprocess_output(model.outputs)
+            tf.summary.image("outputs", deprocessed_outputs)
 
         with tf.name_scope("encode_images"):
             display_fetches = {

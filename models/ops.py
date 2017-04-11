@@ -251,6 +251,7 @@ def discriminator(discrim_inputs, discrim_targets, ndf, instancenorm=False):
 
     # 2x [batch, height, width, in_channels]
     # => [batch, height, width, in_channels * 2]
+    print discrim_inputs, discrim_targets
     input = concatenate(values=[discrim_inputs, discrim_targets], axis=3)
 
     # layer_1: [batch, 256, 256, in_channels * 2] => [batch, 128, 128, ndf]

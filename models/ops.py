@@ -207,6 +207,7 @@ def decoder(input_layers, layer_specs, output_layer_specs,
             if upsample:
                 output = upsample(rectified, out_channels, stride=2)
             else:
+                print rectified
                 output = deconv(rectified, out_channels)
             output = norm(output)
 
@@ -227,13 +228,18 @@ def decoder(input_layers, layer_specs, output_layer_specs,
             output = upsample(rectified, out_channels, stride=2)
         else:
             output = deconv(rectified, out_channels)
+        mean = tf.reduce_mean(output)
+        output = tf.Print(output, [mean], message='Before tanh ')
         output = tf.tanh(output)
 
         if dropout > 0.0:
             output = tf.nn.dropout(output, keep_prob=1 - dropout)
 
+        mean = tf.reduce_mean(output)
+        output = tf.Print(output, [mean], message='After tanh ')
         layers.append(output)
         named_layers["decoder_1"] = layers[-1]
+
 
     return layers[-1]
 

@@ -6,10 +6,14 @@ def encoder(encoder_inputs, ngf, instancenorm=False):
     """Return VGG features for image."""
 
     features = {}
-    features['block2_conv2'] = encoder_inputs.pop(0)
-    features['block3_conv4'] = encoder_inputs.pop(0)
-    features['block4_conv4'] = encoder_inputs.pop(0)
-    features['block5_conv4'] = encoder_inputs.pop(0)
+    with tf.variable_scope("block2_conv2"):
+        features['block2_conv2'] = ops.batchnorm(encoder_inputs.pop(0))
+    with tf.variable_scope("block3_conv4"):
+        features['block3_conv4'] = ops.batchnorm(encoder_inputs.pop(0))
+    with tf.variable_scope("block4_conv4"):
+        features['block4_conv4'] = ops.batchnorm(encoder_inputs.pop(0))
+    with tf.variable_scope("block5_conv4"):
+        features['block5_conv4'] = ops.batchnorm(encoder_inputs.pop(0))
 
     return features, None
 

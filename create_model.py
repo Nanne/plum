@@ -66,6 +66,8 @@ def create_model(inputs, targets, aux_targets=None):
         # Compute Bhataccarya distance
         gen_loss = 0
         if FLAGS.decoder:
+            mean = tf.reduce_mean(targets)
+            targets = tf.Print(targets, [mean], message='Target ')
             logits_pred = tf.reshape(outputs, [FLAGS.batch_size, -1])
             target_flat = tf.reshape(targets, [FLAGS.batch_size, -1])
             prob_pred = tf.nn.softmax(logits_pred)

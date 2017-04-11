@@ -24,7 +24,7 @@ def main(_):
 
     if FLAGS.salicon:
         util.set_salicon()
-    
+
     if FLAGS.output_dir != None:
         if not os.path.exists(FLAGS.output_dir):
             os.makedirs(FLAGS.output_dir)
@@ -50,9 +50,11 @@ def main(_):
 
     examples = dataprovider.load_records()
 
-    # Retrieve data specific functions
+    # Retrieve data specific function deprocess
+    # It deprocesss output image
     deprocess_input = examples.deprocess_input
     deprocess_output = examples.deprocess_output
+
 
     print("examples count = %d" % examples.count)
     if FLAGS.decoder and FLAGS.aux:
@@ -81,11 +83,11 @@ def main(_):
         with tf.name_scope("encode_images"):
             display_fetches = {
                 "paths": examples.paths,
-                "images": tf.map_fn(tf.image.encode_png, converted_images,
+                "images": tf.map_fn(tf.image.encode_png, deprocessed_images,
                                     dtype=tf.string, name="input_pngs"),
-                "targets": tf.map_fn(tf.image.encode_png, converted_targets,
+                "targets": tf.map_fn(tf.image.encode_png, deprocessed_targets,
                                      dtype=tf.string, name="target_pngs"),
-                "outputs": tf.map_fn(tf.image.encode_png, converted_outputs,
+                "outputs": tf.map_fn(tf.image.encode_png, deprocessed_outputs,
                                      dtype=tf.string, name="output_pngs"),
             }
 
@@ -96,7 +98,7 @@ def main(_):
     if FLAGS.discriminator:
         with tf.name_scope("predict_real_summary"):
             tf.summary.image("predict_real",
-                             tf.image.convert_image_dtype(model.predict_real,
+                             tf.image.deprocess_image_dtype(model.predict_real,
                                                           dtype=tf.uint8))
         with tf.name_scope("predict_fake_summary"):
             tf.summary.image("predict_fake",

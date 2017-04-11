@@ -9,11 +9,13 @@ import json
 FLAGS = tf.app.flags.FLAGS  # parse config
 
 if FLAGS.dataset == "SALICON":
-    from datasets.SALICON import read_record, preprocess_input, preprocess_output, deprocess_input, deprocess_output
+    from datasets.SALICON import read_record, convert
+if FLAGS.dataset == "SALICON_VGG":
+    from datasets.salicon_vggfeatures import read_record, deprocess_input, deprocess_output
 elif FLAGS.dataset == "mscoco_objects":
-    from datasets.mscoco_objects import read_record, preprocess_input, preprocess_output, deprocess_input, deprocess_output
+    from datasets.mscoco_objects import read_record, deprocess_input, deprocess_output
 elif FLAGS.dataset == "vggfeatures":
-    from datasets.vggfeatures import read_record, preprocess_input, preprocess_output, deprocess_input, deprocess_output
+    from datasets.vggfeatures import read_record, deprocess_input, deprocess_output
 else:
     raise ValueError('Unknown dataset option')
 
@@ -90,10 +92,11 @@ def load_records():
         e["images"] = image_batch
     else:
         # otherwise we visualise the inputs
-        e["imagea"] = e["inputs"]
+        e["images"] = e["inputs"]
 
     e["deprocess_input"] = deprocess_input
     e["deprocess_output"] = deprocess_output
+
 
     examples = to_namedtuple(e, "Examples")
     return examples

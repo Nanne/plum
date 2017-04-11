@@ -9,13 +9,12 @@ import json
 import random
 import math
 import time
-from create_model import create_model
 import cfg, util, dataprovider
+from create_model import create_model
 
 FLAGS = tf.app.flags.FLAGS  # parse config
 CROP_SIZE = 256
 FLAGS.crop_size = CROP_SIZE
-
 
 def main(_):
     """Run Everything."""
@@ -64,13 +63,6 @@ def main(_):
         model = create_model(examples.inputs, examples.targets)
     else:
         raise Exception("At least on of --aux or --decoder has to be True")
-
-    if FLAGS.upsample_h:
-        up_size = (FLAGS.upsample_h, FLAGS.upsample_w)
-    elif FLAGS.aspect_ratio != 1.0:
-        up_size = [CROP_SIZE, int(round(CROP_SIZE * FLAGS.aspect_ratio))]
-    else:
-        up_size = None
 
     # summaries
     with tf.name_scope("images_summary"):

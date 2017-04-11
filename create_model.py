@@ -72,10 +72,14 @@ def create_model(inputs, targets, aux_targets=None):
             prob_target = tf.nn.softmax(target_flat)
             gen_loss_bat = - tf.log(tf.reduce_sum(tf.sqrt(tf.multiply(prob_pred, prob_target))))
             gen_loss_L1 = tf.reduce_mean(tf.abs(targets - outputs))
+            gen_loss_L2 = tf.reduce_mean(tf.pow(targets - outputs,2))
+
             if FLAGS.content_loss == 'bat':
                 gen_loss_content = gen_loss_bat
             elif FLAGS.content_loss == 'L1':
                 gen_loss_content = gen_loss_L1
+            elif FLAGS.content_loss == 'L2':
+                gen_loss_content = gen_loss_L2
             elif FLAGS.content_loss == 'both':
                 gen_loss_content = 0.1 * gen_loss_L1 + 0.9 * gen_loss_bat
             else:

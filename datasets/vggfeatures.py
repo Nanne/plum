@@ -6,6 +6,7 @@ from img_ops import transform, img_to_float
 import random
 
 FLAGS = tf.app.flags.FLAGS  # parse config
+FLAGS.pretrained = True
 
 def feature_to_shaped(feature, shape, dtype=tf.uint8):
     shaped = tf.decode_raw(feature, dtype)
@@ -53,15 +54,12 @@ def read_record(filename_queue, aux=False):
     tensors.append(feature_to_shaped(features['block5_conv4'], features['block5_conv4_size'], dtype=tf.float32))
     tensors[-1].set_shape((14, 14, 512))
 
-    # Add target image
-    if FLAGS.decoder:
-        image = feature_to_shaped(features['image'], features['image_size'], dtype=tf.uint8)
-        image.set_shape((224,224,3))
-        image = tf.cast(image, tf.float32)
+    image = feature_to_shaped(features['image'], features['image_size'], dtype=tf.uint8)
+    image.set_shape((224,224,3))
 
-        tensors.append(preprocess_output(image))
-        # Append image again for in summary
-        tensors.append(image)
+    tensors.append(preprocess_output(image))
+    # Append image again for in summary
+    tensors.append(image)
 
     return tensors
 
@@ -71,17 +69,18 @@ def preprocess_input(image):
         return tf.identity(image)
 
 def deprocess_input(image):
-    """To uint8."""
+    """Identity."""
     with tf.name_scope("deprocess_input"):
-        return tf.cast(image, tf.uint8)
+        return tf.identity(image)
 
 def preprocess_output(image):
-    """ [0,255] -> [-1, 1] """
+    """ uint8 [0,255] -> float32 [-1, 1] """
     with tf.name_scope("preprocess_output"):
-        return (image/255) * 2 - 1
+        image = tf.image.convert_image_dtype(image, tf.float32, saturate=True)
+        return image * 2 - 1
 
 def deprocess_output(image):
-    """[-1, 1] => [0, 255]."""
+    """float32 [-1, 1] => uint8 [0, 255]."""
     with tf.name_scope("deprocess_output"):
-        image = ((image + 1) / 2) * 255
-        return tf.cast(image, tf.uint8)
+        image = (image + 1) / 2
+        return tf.image.convert_image_dtype(image, tf.uint8, saturate=True)

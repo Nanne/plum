@@ -52,9 +52,8 @@ def main(_):
     examples = dataprovider.load_records()
 
     # Retrieve data specific functions
-    deprocess = examples.deprocess
-    preprocess = examples.preprocess
-    convert = examples.convert
+    deprocess_input = examples.deprocess_input
+    deprocess_output = examples.deprocess_output
 
     print("examples count = %d" % examples.count)
     if FLAGS.decoder and FLAGS.aux:
@@ -66,11 +65,6 @@ def main(_):
     else:
         raise Exception("At least on of --aux or --decoder has to be True")
 
-    # undo preprocessing on output and display images
-    if FLAGS.decoder:
-        targets = deprocess(examples.targets)
-        outputs = deprocess(model.outputs)
-
     if FLAGS.upsample_h:
         up_size = (FLAGS.upsample_h, FLAGS.upsample_w)
     elif FLAGS.aspect_ratio != 1.0:
@@ -78,18 +72,19 @@ def main(_):
     else:
         up_size = None
 
-    # reverse any processing on images so they can
-    # be written to disk or displayed to user
-    with tf.name_scope("convert_images"):
-        images = deprocess(examples.image)
-        converted_images = convert(images, up_size)
+    # summaries
+    with tf.name_scope("images_summary"):
+        converted_images = deprocess_input(examples.images)
+        tf.summary.image("images", converted_images)
 
     if FLAGS.decoder:
-        with tf.name_scope("convert_targets"):
-            converted_targets = convert(targets, up_size)
+        with tf.name_scope("targets_summary"):
+            converted_targets = deprocess_output(examples.targets)
+            tf.summary.image("targets", converted_targets)
 
-        with tf.name_scope("convert_outputs"):
-            converted_outputs = convert(outputs, up_size)
+        with tf.name_scope("outputs_summary"):
+            converted_outputs = deprocess_output(model.outputs)
+            tf.summary.image("outputs", converted_outputs)
 
         with tf.name_scope("encode_images"):
             display_fetches = {
@@ -102,17 +97,8 @@ def main(_):
                                      dtype=tf.string, name="output_pngs"),
             }
 
-    # summaries
-    with tf.name_scope("images_summary"):
-        tf.summary.image("images", converted_images)
 
     if FLAGS.decoder:
-        with tf.name_scope("targets_summary"):
-            tf.summary.image("targets", converted_targets)
-
-        with tf.name_scope("outputs_summary"):
-            tf.summary.image("outputs", converted_outputs)
-
         tf.summary.scalar("generator_loss_content", model.gen_loss_content)
 
     if FLAGS.discriminator:

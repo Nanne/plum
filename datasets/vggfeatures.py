@@ -32,18 +32,18 @@ def read_record(filename_queue, aux=False):
             'block3_conv4': tf.FixedLenFeature([], tf.string),
             'block4_conv4': tf.FixedLenFeature([], tf.string),
             'block5_conv4': tf.FixedLenFeature([], tf.string),
-            'block2_conv2_size': tf.FixedLenFeature([3], tf.int64),
-            'block3_conv4_size': tf.FixedLenFeature([3], tf.int64),
-            'block4_conv4_size': tf.FixedLenFeature([3], tf.int64),
-            'block5_conv4_size': tf.FixedLenFeature([3], tf.int64),
+            'block2_conv2_size': tf.FixedLenFeature([4], tf.int64),
+            'block3_conv4_size': tf.FixedLenFeature([4], tf.int64),
+            'block4_conv4_size': tf.FixedLenFeature([4], tf.int64),
+            'block5_conv4_size': tf.FixedLenFeature([4], tf.int64),
             'image': tf.FixedLenFeature([], tf.string),
             'image_size': tf.FixedLenFeature([3], tf.int64),
         })
-    # Reshape byte-string image to original shape
+
     path = features['path']
-    
     tensors = [path]
 
+    # Reshape byte-strings to original shape
     tensors.append(feature_to_shaped(features['block2_conv2'], features['block2_conv2_size'], dtype=tf.float32))
     tensors[-1].set_shape((112, 112, 128))
     tensors.append(feature_to_shaped(features['block3_conv4'], features['block3_conv4_size'], dtype=tf.float32))
@@ -55,8 +55,7 @@ def read_record(filename_queue, aux=False):
 
     # Add target image
     if FLAGS.decoder:
-        print 'decoder'
-        image = feature_to_shaped(features['image'], features['image_size'], dtype=tf.float64)
+        image = feature_to_shaped(features['image'], features['image_size'], dtype=tf.uint8)
         image.set_shape((224,224,3))
         image = tf.cast(image, tf.float32)
 
@@ -72,9 +71,9 @@ def preprocess_input(image):
         return tf.identity(image)
 
 def deprocess_input(image):
-    """Identity."""
+    """To uint8."""
     with tf.name_scope("deprocess_input"):
-        return tf.identity(image)
+        return tf.cast(image, tf.uint8)
 
 def preprocess_output(image):
     """ [0,255] -> [-1, 1] """

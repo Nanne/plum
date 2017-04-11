@@ -55,16 +55,9 @@ def main(_):
     deprocess_input = examples.deprocess_input
     deprocess_output = examples.deprocess_output
 
-
     print("examples count = %d" % examples.count)
-    if FLAGS.decoder and FLAGS.aux:
-        model = create_model(examples.inputs, examples.targets, examples.aux)
-    elif FLAGS.aux:
-        model = create_model(examples.inputs, None, examples.aux)
-    elif FLAGS.decoder:
-        model = create_model(examples.inputs, examples.targets)
-    else:
-        raise Exception("At least on of --aux or --decoder has to be True")
+    model = create_model(examples)
+
 
     # summaries
     with tf.name_scope("images_summary"):
@@ -98,7 +91,7 @@ def main(_):
     if FLAGS.discriminator:
         with tf.name_scope("predict_real_summary"):
             tf.summary.image("predict_real",
-                             tf.image.deprocess_image_dtype(model.predict_real,
+                             tf.image.convert_image_dtype(model.predict_real,
                                                           dtype=tf.uint8))
         with tf.name_scope("predict_fake_summary"):
             tf.summary.image("predict_fake",

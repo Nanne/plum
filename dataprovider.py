@@ -82,9 +82,13 @@ def load_records():
     if FLAGS.decoder:
         targets_batch = batch.pop(0)
         e["targets"] = targets_batch
+    else:
+        e['targets'] = None
     if FLAGS.aux:
         aux_targets_batch = batch.pop(0)
         e["aux"] = aux_targets_batch
+    else:
+        e['aux'] = None
     if FLAGS.pretrained:
         # Is the input comes from a pretrained model, then visualise
         # the next tensor
@@ -93,6 +97,11 @@ def load_records():
     else:
         # otherwise we visualise the inputs
         e["images"] = e["inputs"]
+
+    if FLAGS.discriminator:
+        e['discriminator_inputs'] = e['images']
+    else:
+        e['discriminator_inputs'] = None
 
     e["deprocess_input"] = deprocess_input
     e["deprocess_output"] = deprocess_output

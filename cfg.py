@@ -44,9 +44,12 @@ tf.app.flags.DEFINE_integer("--ndf", 64,
 tf.app.flags.DEFINE_integer("num_classes", None,
                             "Number of classes for auxiliary prediction")
 
-tf.app.flags.DEFINE_string("content_loss", "bat",
-                           "Choose 'bat', 'L1' or 'both' \
-                            for Bhattaccarya, L1 or interpolated loss")
+tf.app.flags.DEFINE_float("bat_loss", 0,
+                          "Weight for Bhattaccarya loss")
+tf.app.flags.DEFINE_float("l1_loss", 0,
+                            "Weight for L1 loss")
+tf.app.flags.DEFINE_float("l2_loss", 0,
+                           "Weight for L2 loss")
 tf.app.flags.DEFINE_float("content_weight", 100.0,
                           "weight on content term for generator gradient")
 tf.app.flags.DEFINE_float("aux_weight", 10.0,

@@ -66,8 +66,6 @@ def create_model(inputs, targets, aux_targets=None):
         # Compute Bhataccarya distance
         gen_loss = 0
         if FLAGS.decoder:
-            mean = tf.reduce_mean(targets)
-            targets = tf.Print(targets, [mean], message='Target ')
             logits_pred = tf.reshape(outputs, [FLAGS.batch_size, -1])
             target_flat = tf.reshape(targets, [FLAGS.batch_size, -1])
             prob_pred = tf.nn.softmax(logits_pred)
@@ -116,7 +114,6 @@ def create_model(inputs, targets, aux_targets=None):
                 m['gen_grads_and_vars'] = gen_grads_and_vars
         else:
             gen_tvars = [var for var in tf.trainable_variables() if var.name.startswith("generator")]
-            print [x.name for x  in gen_tvars]
             gen_optim = tf.train.AdamOptimizer(FLAGS.lr, FLAGS.beta1)
             gen_grads_and_vars = gen_optim.compute_gradients(gen_loss,
                                                              var_list=gen_tvars)

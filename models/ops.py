@@ -175,7 +175,7 @@ def encoder(encoder_inputs, input_layer_spec, layer_specs, instancenorm=False):
     return named_layers, img_embed
 
 def decoder(input_layers, layer_specs, output_layer_specs,
-            drop_prob=0.5, instancenorm=False, upsample=False):
+            instancenorm=False, do_upsample=False):
     """Create decoder network  based on some layerspec."""
 
     layers = []
@@ -204,10 +204,9 @@ def decoder(input_layers, layer_specs, output_layer_specs,
             rectified = tf.nn.relu(input)
             # [batch, in_height, in_width, in_channels]
             # => [batch, in_height*2, in_width*2, out_channels]
-            if upsample:
-                output = upsample(rectified, out_channels, stride=2)
+            if do_upsample:
+                output = upsample(rectified, out_channels, stride=1)
             else:
-                print rectified
                 output = deconv(rectified, out_channels)
             output = norm(output)
 
@@ -225,18 +224,14 @@ def decoder(input_layers, layer_specs, output_layer_specs,
         input = concatenate(values=[layers[-1], input_layers[skip_layer]], axis=3)
         rectified = tf.nn.relu(input)
         if upsample:
-            output = upsample(rectified, out_channels, stride=2)
+            output = upsample(rectified, out_channels, stride=1)
         else:
             output = deconv(rectified, out_channels)
-        mean = tf.reduce_mean(output)
-        output = tf.Print(output, [mean], message='Before tanh ')
         output = tf.tanh(output)
 
         if dropout > 0.0:
             output = tf.nn.dropout(output, keep_prob=1 - dropout)
 
-        mean = tf.reduce_mean(output)
-        output = tf.Print(output, [mean], message='After tanh ')
         layers.append(output)
         named_layers["decoder_1"] = layers[-1]
 

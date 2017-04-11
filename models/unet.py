@@ -51,7 +51,7 @@ def decoder(encoder_activations, ngf, generator_output_channels,
     output_layer_specs = (generator_output_channels, 0.0, 'encoder_1')
 
     return ops.decoder(encoder_activations, layer_specs, output_layer_specs,
-            drop_prob=0.5, instancenorm=False, upsample=False)
+            instancenorm=False, do_upsample=False)
 
 def discriminator(discrim_inputs, discrim_targets, ndf, instancenorm=False):
     return ops.discriminator(discrim_inputs, discrim_targets, ndf, instancenorm=False)

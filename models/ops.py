@@ -80,9 +80,10 @@ def upsample(batch_input, out_channels, stride):
         sizes = [int(d) for d in batch_input.get_shape()]
         _, in_height, in_width, in_channels = sizes
 
-        upsampled_input = tf.image.resize_nearest_neighbor(batch_input,
-                                                          [int(in_height)*2,
-                                                           int(in_width)*2])
+        upsampled_input = tf.image.resize_images(batch_input,
+                                                [int(in_height)*2,
+                                                 int(in_width)*2],
+                                                 method=tf.image.ResizeMethod.BILINEAR)
 
         filter = tf.get_variable("filter", [4, 4,
                                             in_channels,

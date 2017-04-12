@@ -59,19 +59,21 @@ def read_record(filename_queue, aux=False):
 
     tensors.append(preprocess_output(image))
     # Append image again for in summary
-    tensors.append(image)
+    tensors.append(preprocess_input(image))
 
     return tensors
 
 def preprocess_input(image):
-    """Identity."""
+    """ uint8 [0,255] -> float32 [-1, 1] """
     with tf.name_scope("preprocess_input"):
-        return tf.identity(image)
+        image = tf.image.convert_image_dtype(image, tf.float32, saturate=True)
+        return image * 2 - 1
 
 def deprocess_input(image):
-    """Identity."""
+    """float32 [-1, 1] => uint8 [0, 255]."""
     with tf.name_scope("deprocess_input"):
-        return tf.identity(image)
+        image = (image + 1) / 2
+        return tf.image.convert_image_dtype(image, tf.uint8, saturate=True)
 
 def preprocess_output(image):
     """ uint8 [0,255] -> float32 [-1, 1] """

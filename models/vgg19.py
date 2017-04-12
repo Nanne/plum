@@ -26,9 +26,9 @@ def decoder(encoder_activations, ngf, generator_output_channels,
     # decoder_2: [batch, 64, 64, ngf * 2 * 2] => [batch, 112, 112, ngf * 2]
 
     layer_specs = [
-        (drop_prob, 'block5_conv4'),
-        (drop_prob, 'block4_conv4'),
-        (drop_prob, 'block3_conv4'),
+        (0, 'block5_conv4'),
+        (0, 'block4_conv4'),
+        (0, 'block3_conv4'),
     ]
 
     output_layer_specs = (generator_output_channels, 0.0, 'block2_conv2')

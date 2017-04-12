@@ -41,10 +41,9 @@ def conv(batch_input, out_channels, stride):
                                  dtype=tf.float32,
                                  initializer=tf.random_normal_initializer(0, 0.02))
 
-        padded_input = tf.pad(batch_input, [[0, 0], [1, 1], [1, 1], [0, 0]],
-                              mode="CONSTANT")
-        conv = tf.nn.conv2d(padded_input, filter, [1, stride, stride, 1],
-                            padding="VALID")
+
+        conv = tf.nn.conv2d(batch_input, filter, [1, stride, stride, 1],
+                            padding="SAME")
         return conv
 
 def deconv(batch_input, out_channels):
@@ -68,9 +67,10 @@ def deconv(batch_input, out_channels):
                                       [1, 2, 2, 1], padding="SAME")
         return conv
 
-def upsample(batch_input, out_channels, stride):
+def upsample(batch_input, out_channels, out_shape=None, stride=1, 
+        method=tf.image.ResizeMethod.NEAREST_NEIGHBOR):
     """
-    Add bilinear upsampling followed by a convolutional layer to the graph.
+    Add upsampling followed by a convolutional layer to the graph.
 
     [batch, in_height, in_width, in_channels],
     [filter_width, filter_height, in_channels, out_channels]
@@ -80,9 +80,12 @@ def upsample(batch_input, out_channels, stride):
         sizes = [int(d) for d in batch_input.get_shape()]
         _, in_height, in_width, in_channels = sizes
 
-        upsampled_input = tf.image.resize_nearest_neighbor(batch_input,
-                                                          [int(in_height)*2,
-                                                           int(in_width)*2])
+        if out_shape == None:
+            out_shape = (int(in_height)*2, int(in_width)*2) 
+
+        upsampled_input = tf.image.resize_images(batch_input,
+                                                out_shape,
+                                                method=method)
 
         filter = tf.get_variable("filter", [4, 4,
                                             in_channels,
@@ -175,7 +178,7 @@ def encoder(encoder_inputs, input_layer_spec, layer_specs, instancenorm=False):
     return named_layers, img_embed
 
 def decoder(input_layers, layer_specs, output_layer_specs,
-            instancenorm=False, do_upsample=False):
+            instancenorm=False, upsample_method=None):
     """Create decoder network  based on some layerspec."""
 
     layers = []
@@ -190,6 +193,7 @@ def decoder(input_layers, layer_specs, output_layer_specs,
             next_skip = layer_specs[decoder_layer+1][1]
         else:
             next_skip = output_layer_specs[2]
+
         out_channels = int(input_layers[next_skip].get_shape()[3])
 
         scope_name = "decoder_%d" % (len(layer_specs) + 1 - decoder_layer)
@@ -204,8 +208,13 @@ def decoder(input_layers, layer_specs, output_layer_specs,
             rectified = tf.nn.relu(input)
             # [batch, in_height, in_width, in_channels]
             # => [batch, in_height*2, in_width*2, out_channels]
-            if do_upsample:
-                output = upsample(rectified, out_channels, stride=1)
+            if upsample_method:
+                out_height = int(input_layers[next_skip].get_shape()[1])
+                out_width = int(input_layers[next_skip].get_shape()[2])
+
+                output = upsample(rectified, out_channels, 
+                                  out_shape=(out_height, out_width), 
+                                  method=upsample_method)
             else:
                 output = deconv(rectified, out_channels)
             output = norm(output)

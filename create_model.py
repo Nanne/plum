@@ -9,6 +9,8 @@ if FLAGS.architecture == "unet":
     from models.unet import encoder, decoder, discriminator
 elif FLAGS.architecture == "vgg19":
     from models.vgg19 import encoder, decoder, discriminator
+elif FLAGS.architecture == "vgg19plus":
+    from models.vgg19plus import encoder, decoder, discriminator
 else:
     raise ValueError('Unknown architecture option')
 

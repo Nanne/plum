@@ -29,14 +29,8 @@ def read_record(filename_queue, aux=False):
       features={
             'id': tf.FixedLenFeature([1], tf.int64),
             'path': tf.FixedLenFeature([], tf.string),
-            'block2_conv2': tf.FixedLenFeature([], tf.string),
-            'block3_conv4': tf.FixedLenFeature([], tf.string),
-            'block4_conv4': tf.FixedLenFeature([], tf.string),
-            'block5_conv4': tf.FixedLenFeature([], tf.string),
-            'block2_conv2_size': tf.FixedLenFeature([4], tf.int64),
-            'block3_conv4_size': tf.FixedLenFeature([4], tf.int64),
-            'block4_conv4_size': tf.FixedLenFeature([4], tf.int64),
-            'block5_conv4_size': tf.FixedLenFeature([4], tf.int64),
+            'fc1': tf.FixedLenFeature([], tf.string),
+            'fc1_size': tf.FixedLenFeature([4], tf.int64),
             'image': tf.FixedLenFeature([], tf.string),
             'image_size': tf.FixedLenFeature([3], tf.int64),
         })
@@ -45,14 +39,8 @@ def read_record(filename_queue, aux=False):
     tensors = [path]
 
     # Reshape byte-strings to original shape
-    tensors.append(feature_to_shaped(features['block2_conv2'], features['block2_conv2_size'], dtype=tf.float32))
-    tensors[-1].set_shape((112, 112, 128))
-    tensors.append(feature_to_shaped(features['block3_conv4'], features['block3_conv4_size'], dtype=tf.float32))
-    tensors[-1].set_shape((56, 56, 256))
-    tensors.append(feature_to_shaped(features['block4_conv4'], features['block4_conv4_size'], dtype=tf.float32))
-    tensors[-1].set_shape((28, 28, 512))
-    tensors.append(feature_to_shaped(features['block5_conv4'], features['block5_conv4_size'], dtype=tf.float32))
-    tensors[-1].set_shape((14, 14, 512))
+    tensors.append(feature_to_shaped(features['fc1'], features['fc1_size'], dtype=tf.float32))
+    tensors[-1].set_shape((4096))
 
     image = feature_to_shaped(features['image'], features['image_size'], dtype=tf.uint8)
     image.set_shape((224,224,3))

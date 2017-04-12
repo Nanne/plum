@@ -9,18 +9,15 @@ import json
 FLAGS = tf.app.flags.FLAGS  # parse config
 
 if FLAGS.dataset == "SALICON":
-    from datasets.SALICON import read_record, convert
+    from datareaders.SALICON import read_record, convert
 if FLAGS.dataset == "SALICON_VGG":
-    from datasets.salicon_vggfeatures import read_record, deprocess_input, deprocess_output
+    from datareaders.salicon_vggfeatures import read_record, deprocess_input, deprocess_output
 elif FLAGS.dataset == "mscoco_objects":
-    from datasets.mscoco_objects import read_record, deprocess_input, deprocess_output
+    from datareaders.mscoco_objects import read_record, deprocess_input, deprocess_output
 elif FLAGS.dataset == "vggfeatures":
-    from datasets.vggfeatures import read_record, deprocess_input, deprocess_output
+    from datareaders.vggfeatures import read_record, deprocess_input, deprocess_output
 else:
-    print FLAGS.dataset
-    print FLAGS.dataset
-
-    raise ValueError('Unknown dataset option')
+    raise ValueError('Unknown dataset option: ' + FLAGS.dataset)
 
 def getsize(filename):
     jsfile = filename + ".json"

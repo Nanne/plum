@@ -1,16 +1,16 @@
 from util import to_namedtuple
-import models.ops as ops
+import architectures.ops as ops
 import tensorflow as tf
 
 EPS = 1e-12
 FLAGS = tf.app.flags.FLAGS  # parse config
 
 if FLAGS.architecture == "unet":
-    from models.unet import encoder, decoder, discriminator
+    from architectures.unet import encoder, decoder, discriminator
 elif FLAGS.architecture == "vgg19":
-    from models.vgg19 import encoder, decoder, discriminator
+    from architectures.vgg19 import encoder, decoder, discriminator
 elif FLAGS.architecture == "vgg19plus":
-    from models.vgg19plus import encoder, decoder, discriminator
+    from architectures.vgg19plus import encoder, decoder, discriminator
 else:
     raise ValueError('Unknown architecture option')
 
@@ -37,6 +37,7 @@ def create_model(e):
         if e.aux != None:
             with tf.name_scope("classifier"):
                 logits = ops.dense(image_embedding, FLAGS.num_classes)
+
     # Add discriminator and GAN loss
     if e.discriminator_inputs != None:
         # create two copies of discriminator,

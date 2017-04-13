@@ -73,24 +73,28 @@ if __name__ == '__main__':
                                """Which VGG19 layers to extract.
                                Comma seperated.""")
     tf.app.flags.DEFINE_boolean("include_top", False, "include_top for keras.VGG19 call")
+    tf.app.flags.DEFINE_integer("crop_size", 224, "Size to crop to")
 
     # Path to the data set
     img_files = os.listdir(FLAGS.img_root)
     num_imgs = len(img_files)
 
-    print "Initializing model"
-    # VGG19 without the last fully connected layers
-    base_model = VGG19(weights='imagenet', include_top=FLAGS.include_top)
+    extract = [l.strip() for l in FLAGS.extract.split(',') if len(l.strip()) > 0]
 
-    extract = [l.strip() for l in FLAGS.extract.split(',')]
+    if len(extract) > 0:
+        print 'Extracting:', extract
 
-    print 'Extracting:', extract
+        print "Initializing model"
+        # VGG19 without the last fully connected layers
+        base_model = VGG19(weights='imagenet', include_top=FLAGS.include_top)
 
-    out_layers = []
-    for layer in extract:
-        out_layers.append(base_model.get_layer(layer).output)
 
-    model = Model(input=base_model.input, output=out_layers)
+        out_layers = []
+        for layer in extract:
+            out_layers.append(base_model.get_layer(layer).output)
+
+        model = Model(input=base_model.input, output=out_layers)
+
     writer = tf.python_io.TFRecordWriter(FLAGS.record_path)
 
     with open(FLAGS.record_path + ".json", 'w') as f:
@@ -103,16 +107,18 @@ if __name__ == '__main__':
         path = os.path.join(FLAGS.img_root, img_files[i])
 
         image = keras_image.load_img(path)
-        cropped = crop_image(image)
-        standardized = keras_image.img_to_array(cropped)
-        standardized = np.expand_dims(standardized, axis=0)
-        standardized = preprocess_input(standardized)
-
-        features = model.predict(standardized)
-
+        cropped = crop_image(image, target_height=FLAGS.crop_size, target_width=FLAGS.crop_size)
         tensors = {}
-        for j,layer in enumerate(extract):
-            tensors[layer] = features[j]
+
+        if len(extract) > 0:
+            standardized = keras_image.img_to_array(cropped)
+            standardized = np.expand_dims(standardized, axis=0)
+            standardized = preprocess_input(standardized)
+
+            features = model.predict(standardized)
+
+            for j,layer in enumerate(extract):
+                tensors[layer] = features[j]
 
         write_to(writer, i, cropped, path, tensors)
 
